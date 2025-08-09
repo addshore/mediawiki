@@ -61,6 +61,8 @@ use Wikimedia\Rdbms\IConnectionProvider;
 use Wikimedia\Rdbms\IDBAccessObject;
 use Wikimedia\Rdbms\IExpression;
 use Wikimedia\Rdbms\LikeValue;
+use Wikimedia\Parsoid\Core\SectionMetadata;
+use Wikimedia\Parsoid\Core\TOCData;
 
 /**
  * Displays information about a page.
@@ -69,6 +71,15 @@ use Wikimedia\Rdbms\LikeValue;
  */
 class InfoAction extends FormlessAction {
 	private const VERSION = 1;
+
+	/** @var TOCData */
+	private $tocData;
+
+	/** @var int */
+	private $tocIndex;
+
+	/** @var int */
+	private $tocSection;
 
 	private Language $contentLanguage;
 	private LanguageNameUtils $languageNameUtils;
@@ -190,6 +201,11 @@ class InfoAction extends FormlessAction {
 		$msg = $this->msg( 'pageinfo-header' );
 		$content = $msg->isDisabled() ? '' : $msg->parse();
 
+		$this->tocData = new TOCData();
+		$this->tocIndex = 0;
+		$this->tocSection = 0;
+		$this->getOutput()->addTOCPlaceholder( $this->tocData );
+
 		// Get page information
 		$pageInfo = $this->pageInfo();
 
@@ -201,6 +217,7 @@ class InfoAction extends FormlessAction {
 			// Messages:
 			// pageinfo-header-basic, pageinfo-header-edits, pageinfo-header-restrictions,
 			// pageinfo-header-properties, pageinfo-category-info
+			$this->addTocSection( "pageinfo-$header", "mw-pageinfo-$header" );
 			$content .= $this->makeHeader(
 				$this->msg( "pageinfo-$header" )->text(),
 				"mw-pageinfo-$header"
@@ -233,6 +250,29 @@ class InfoAction extends FormlessAction {
 	}
 
 	/**
+	 * Add a section to the table of contents. This doesn't add the heading to the actual page.
+	 * Assumes the IDs don't use non-ASCII characters.
+	 *
+	 * @param string $labelMsg Message key to use for the label
+	 * @param string $id
+	 */
+	private function addTocSection( $labelMsg, $id ) {
+		$this->tocIndex++;
+		$this->tocSection++;
+		$this->tocData->addSection( new SectionMetadata(
+			1,
+			2,
+			$this->msg( $labelMsg )->escaped(),
+			$this->getLanguage()->formatNum( $this->tocSection ),
+			(string)$this->tocIndex,
+			null,
+			null,
+			$id,
+			$id
+		) );
+	}
+
+	/**
 	 * Creates a header that can be added to the output.
 	 *
 	 * @param string $header The header text.
@@ -242,12 +282,7 @@ class InfoAction extends FormlessAction {
 	private function makeHeader( $header, $canonicalId ) {
 		return Html::rawElement(
 			'h2',
-			[ 'id' => Sanitizer::escapeIdForAttribute( $header ) ],
-			Html::element(
-				'span',
-				[ 'id' => Sanitizer::escapeIdForAttribute( $canonicalId ) ],
-				''
-			) .
+			[ 'id' => Sanitizer::escapeIdForAttribute( $canonicalId ) ],
 			htmlspecialchars( $header )
 		);
 	}
