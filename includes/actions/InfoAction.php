@@ -56,13 +56,14 @@ use MediaWiki\Title\Title;
 use MediaWiki\User\UserFactory;
 use MediaWiki\Watchlist\WatchedItemStoreInterface;
 use Wikimedia\ObjectCache\WANObjectCache;
+use Wikimedia\Parsoid\Core\SectionMetadata;
+use Wikimedia\Parsoid\Core\TOCData;
 use Wikimedia\Rdbms\Database;
 use Wikimedia\Rdbms\IConnectionProvider;
 use Wikimedia\Rdbms\IDBAccessObject;
 use Wikimedia\Rdbms\IExpression;
 use Wikimedia\Rdbms\LikeValue;
-use Wikimedia\Parsoid\Core\SectionMetadata;
-use Wikimedia\Parsoid\Core\TOCData;
+use MediaWiki\Html\TOCGeneratorTrait;
 
 /**
  * Displays information about a page.
@@ -70,16 +71,13 @@ use Wikimedia\Parsoid\Core\TOCData;
  * @ingroup Actions
  */
 class InfoAction extends FormlessAction {
+	use TOCGeneratorTrait;
+
 	private const VERSION = 1;
 
-	/** @var TOCData */
-	private $tocData;
-
-	/** @var int */
-	private $tocIndex;
-
-	/** @var int */
-	private $tocSection;
+	private TOCData $tocData;
+	private int $tocIndex;
+	private int $tocSection;
 
 	private Language $contentLanguage;
 	private LanguageNameUtils $languageNameUtils;
@@ -250,29 +248,6 @@ class InfoAction extends FormlessAction {
 	}
 
 	/**
-	 * Add a section to the table of contents. This doesn't add the heading to the actual page.
-	 * Assumes the IDs don't use non-ASCII characters.
-	 *
-	 * @param string $labelMsg Message key to use for the label
-	 * @param string $id
-	 */
-	private function addTocSection( $labelMsg, $id ) {
-		$this->tocIndex++;
-		$this->tocSection++;
-		$this->tocData->addSection( new SectionMetadata(
-			1,
-			2,
-			$this->msg( $labelMsg )->escaped(),
-			$this->getLanguage()->formatNum( $this->tocSection ),
-			(string)$this->tocIndex,
-			null,
-			null,
-			$id,
-			$id
-		) );
-	}
-
-	/**
 	 * Creates a header that can be added to the output.
 	 *
 	 * @param string $header The header text.
@@ -280,10 +255,10 @@ class InfoAction extends FormlessAction {
 	 * @return string The HTML.
 	 */
 	private function makeHeader( $header, $canonicalId ) {
-		return Html::rawElement(
+		return Html::element(
 			'h2',
 			[ 'id' => Sanitizer::escapeIdForAttribute( $canonicalId ) ],
-			htmlspecialchars( $header )
+			$header
 		);
 	}
 

@@ -45,6 +45,7 @@ use Wikimedia\HtmlArmor\HtmlArmor;
 use Wikimedia\Parsoid\Core\SectionMetadata;
 use Wikimedia\Parsoid\Core\TOCData;
 use Wikimedia\Rdbms\IConnectionProvider;
+use MediaWiki\Html\TOCGeneratorTrait;
 
 /**
  * Version information about MediaWiki (core, extensions, libs), PHP, and the database.
@@ -52,6 +53,9 @@ use Wikimedia\Rdbms\IConnectionProvider;
  * @ingroup SpecialPage
  */
 class SpecialVersion extends SpecialPage {
+	use TOCGeneratorTrait {
+		addTocSection as protected addTocSectionFromTrait;
+	}
 
 	/**
 	 * @var string The current rev id/SHA hash of MediaWiki core
@@ -63,17 +67,10 @@ class SpecialVersion extends SpecialPage {
 	 */
 	protected static $extensionTypes = false;
 
-	/** @var TOCData */
-	protected $tocData;
-
-	/** @var int */
-	protected $tocIndex;
-
-	/** @var int */
-	protected $tocSection;
-
-	/** @var int */
-	protected $tocSubSection;
+	protected TOCData $tocData;
+	protected int $tocIndex;
+	protected int $tocSection;
+	protected int $tocSubSection;
 
 	private ParserFactory $parserFactory;
 	private UrlUtils $urlUtils;
@@ -249,21 +246,9 @@ class SpecialVersion extends SpecialPage {
 	 * @param string $labelMsg Message key to use for the label
 	 * @param string $id
 	 */
-	private function addTocSection( $labelMsg, $id ) {
-		$this->tocIndex++;
-		$this->tocSection++;
+	private function addTocSection( string $labelMsg, string $id ): void {
+		$this->addTocSectionFromTrait( $labelMsg, $id );
 		$this->tocSubSection = 0;
-		$this->tocData->addSection( new SectionMetadata(
-			1,
-			2,
-			$this->msg( $labelMsg )->escaped(),
-			$this->getLanguage()->formatNum( $this->tocSection ),
-			(string)$this->tocIndex,
-			null,
-			null,
-			$id,
-			$id
-		) );
 	}
 
 	/**
