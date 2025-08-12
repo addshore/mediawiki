@@ -25,6 +25,8 @@
 namespace MediaWiki\Actions;
 
 use MediaWiki\Cache\LinkBatchFactory;
+use MediaWiki\Html\TOCGeneratorTrait;
+use Wikimedia\Parsoid\Core\TOCData;
 use MediaWiki\Category\Category;
 use MediaWiki\Content\ContentHandler;
 use MediaWiki\Context\IContextSource;
@@ -56,14 +58,11 @@ use MediaWiki\Title\Title;
 use MediaWiki\User\UserFactory;
 use MediaWiki\Watchlist\WatchedItemStoreInterface;
 use Wikimedia\ObjectCache\WANObjectCache;
-use Wikimedia\Parsoid\Core\SectionMetadata;
-use Wikimedia\Parsoid\Core\TOCData;
 use Wikimedia\Rdbms\Database;
 use Wikimedia\Rdbms\IConnectionProvider;
 use Wikimedia\Rdbms\IDBAccessObject;
 use Wikimedia\Rdbms\IExpression;
 use Wikimedia\Rdbms\LikeValue;
-use MediaWiki\Html\TOCGeneratorTrait;
 
 /**
  * Displays information about a page.
@@ -215,7 +214,16 @@ class InfoAction extends FormlessAction {
 			// Messages:
 			// pageinfo-header-basic, pageinfo-header-edits, pageinfo-header-restrictions,
 			// pageinfo-header-properties, pageinfo-category-info
-			$this->addTocSection( "pageinfo-$header", "mw-pageinfo-$header" );
+			$this->tocIndex++;
+			$this->tocSection++;
+			$section = $this->createTocSection(
+				"pageinfo-$header",
+				$this->getLanguage()->formatNum( $this->tocSection ),
+				(string)$this->tocIndex,
+				"mw-pageinfo-$header"
+			);
+			$this->tocData->addSection( $section );
+
 			$content .= $this->makeHeader(
 				$this->msg( "pageinfo-$header" )->text(),
 				"mw-pageinfo-$header"

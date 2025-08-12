@@ -49,6 +49,7 @@ use MediaWiki\Watchlist\WatchedItemStoreInterface;
 use MediaWiki\Watchlist\WatchlistManager;
 use Wikimedia\Parsoid\Core\SectionMetadata;
 use Wikimedia\Parsoid\Core\TOCData;
+use MediaWiki\Html\TOCGeneratorTrait;
 
 /**
  * Users can edit their watchlist via this page.
@@ -58,6 +59,8 @@ use Wikimedia\Parsoid\Core\TOCData;
  * @author Rob Church <robchur@gmail.com>
  */
 class SpecialEditWatchlist extends UnlistedSpecialPage {
+	use TOCGeneratorTrait;
+
 	/**
 	 * Editing modes. EDIT_CLEAR is no longer used; the "Clear" link scared people
 	 * too much. Now it's passed on to the raw editor, from which it's very easy to clear.
@@ -70,8 +73,7 @@ class SpecialEditWatchlist extends UnlistedSpecialPage {
 	/** @var string|null */
 	protected $successMessage;
 
-	/** @var TOCData */
-	protected $tocData;
+	protected TOCData $tocData;
 
 	/** @var array[] */
 	private $badItems = [];
@@ -732,19 +734,15 @@ class SpecialEditWatchlist extends UnlistedSpecialPage {
 					: $contLang->getFormattedNsText( $ns );
 				$anchor = "editwatchlist-{$data['section']}";
 				++$tocLength;
-				$this->tocData->addSection( new SectionMetadata(
-					1,
-					// This is supposed to be the heading level, e.g. 2 for a <h2> tag,
-					// but this page uses <legend> tags for the headings, so use a fake value
-					99,
-					htmlspecialchars( $nsText ),
+				$section = $this->createTocSection(
+					$nsText,
 					$this->getLanguage()->formatNum( $tocLength ),
 					(string)$tocLength,
-					null,
-					null,
 					$anchor,
-					$anchor
-				) );
+					99,
+					false
+				);
+				$this->tocData->addSection( $section );
 			}
 		}
 

@@ -53,9 +53,7 @@ use MediaWiki\Html\TOCGeneratorTrait;
  * @ingroup SpecialPage
  */
 class SpecialVersion extends SpecialPage {
-	use TOCGeneratorTrait {
-		addTocSection as protected addTocSectionFromTrait;
-	}
+	use TOCGeneratorTrait;
 
 	/**
 	 * @var string The current rev id/SHA hash of MediaWiki core
@@ -247,8 +245,16 @@ class SpecialVersion extends SpecialPage {
 	 * @param string $id
 	 */
 	private function addTocSection( string $labelMsg, string $id ): void {
-		$this->addTocSectionFromTrait( $labelMsg, $id );
+		$this->tocIndex++;
+		$this->tocSection++;
 		$this->tocSubSection = 0;
+		$section = $this->createTocSection(
+			$labelMsg,
+			$this->getLanguage()->formatNum( $this->tocSection ),
+			(string)$this->tocIndex,
+			$id
+		);
+		$this->tocData->addSection( $section );
 	}
 
 	/**

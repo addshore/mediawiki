@@ -11,25 +11,34 @@ use Wikimedia\Parsoid\Core\SectionMetadata;
  */
 trait TOCGeneratorTrait {
 	/**
-	 * Add a section to the table of contents. This doesn't add the heading to the actual page.
-	 * Assumes the IDs don't use non-ASCII characters.
+	 * Creates a TOC section metadata object.
 	 *
-	 * @param string $labelMsg Message key to use for the label
-	 * @param string $id
+	 * @param string $label The label for the TOC entry.
+	 * @param string $number The section number.
+	 * @param string $index The section index.
+	 * @param string $id The HTML ID of the section header.
+	 * @param int $level The heading level (e.g., 2 for h2).
+	 * @param bool $isMsgKey Whether the label is an i18n message key.
+	 * @return SectionMetadata
 	 */
-	protected function addTocSection( string $labelMsg, string $id ): void {
-		$this->tocIndex++;
-		$this->tocSection++;
-		$this->tocData->addSection( new SectionMetadata(
-			1,
-			2,
-			$this->msg( $labelMsg )->escaped(),
-			$this->getLanguage()->formatNum( $this->tocSection ),
-			(string)$this->tocIndex,
+	protected function createTocSection(
+		string $label,
+		string $number,
+		string $index,
+		string $id,
+		int $level = 2,
+		bool $isMsgKey = true
+	): SectionMetadata {
+		return new SectionMetadata(
+			1, // toclevel
+			$level,
+			$isMsgKey ? $this->msg( $label )->escaped() : htmlspecialchars( $label ),
+			$number,
+			$index,
 			null,
 			null,
 			$id,
 			$id
-		) );
+		);
 	}
 }
